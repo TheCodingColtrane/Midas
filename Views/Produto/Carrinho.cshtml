@@ -1,0 +1,94 @@
+﻿@model string[,];
+@{
+    Layout = "_Layout";
+    for(int i = 0; i < Model.Length / 5; i++)
+    {
+        var id = System.Security.Cryptography.RandomNumberGenerator.Create();
+        <section id="s_product_@Model[i, 1]">
+            <h3 id="product_Name_@Model[i, 2]">@Model[i, 2]</h3>
+            <figure>
+                <a href="@Model[i, 3]"><img src="data:image/jpeg; Base64, @Model[i,0]" alt="@Model[i, 2]" /></a>
+            </figure>
+                <span class="precoNovo">@Model[i, 4]</span>
+                <label for="stock">Estoque</label>
+                <select id="product_@Model[i, 1]_Stock_Selection" name="">
+                    @for(int qty = 1; qty < Convert.ToInt32(Model[i, 5]); qty++)
+                    {
+                        <option>@qty</option>
+                    }
+                </select>
+            <button type="button" id="remove-product-@Model[i,1]">Remover Produto do Carrinho</button>
+        </section>
+        id.Dispose();
+    }
+    <input type="submit" formaction="/compra" value="Finalizar compra" />
+
+    <script>
+        var id = '';
+        document.addEventListener('DOMContentLoaded', async function () {
+            const allSelectInputs = document.getElementsByTagName('select');
+            let ids = document.getElementsByTagName('section');
+            for (let currentId of ids) {
+                if (currentId.id != '') {
+                    id = currentId.id.substring(10);
+                    document.querySelector('#remove-product-' + id).addEventListener('click', function () { removeCartProduct(id)});
+                } else {
+                    continue;
+                }
+            }
+            
+
+            //const allForms = document.getElementsByTagName('form');
+            //let forms = '';
+            //for (let form of allForms) {
+            //    form.addEventListener('submit', (evt) => {
+
+            //        const formKeys = form.childNodes.entries();
+            //        form.
+            //            forms = evt.target;
+            //            let formData = new FormData(forms);
+            //            if (!formData.has('qty')) {
+            //                formData.append('qty', '');
+            //                evt.preventDefault();
+            //            }
+                        
+            //        });
+
+
+                //form = this.id;
+                //form = form.replace('product_', '').replace('_Stock', '');
+                
+            //}
+            let selectInputId = '';
+            for (let slct of allSelectInputs) {
+                slct.addEventListener('change', async function () {
+                    selectInputId = this.id;
+                    selectInputId = selectInputId.replace('product_', '').replace('_Stock_Selection', '');
+                    //let productForm = this.parentNode.parentNode;
+                    //let currentForm = new FormData(productForm);
+                    //    currentForm.append('qty', parseInt(this.value));
+                    
+                    
+                    
+                    let isStockAvailable = await get('/api/produto/' + selectInputId + '/stock-check-availability');
+                    const fields = isStockAvailable.length;
+                    if (fields > 1) {
+                        if (isStockAvailable.stockAvailability) {
+                            modalMensagem('Infelizmente, no momento há somente ' + isStockAvailable.stockAvalaible + 'unidades disponiveis do produto');
+                        } else {
+                            modalMensagem('Infelizmente, no momento não há estoque disponível do produto');
+                        }
+                    }
+                    let cookieData = getCartCookieData('mdc');
+                    let indexData = cookieData.productId.findIndex((data) => data === selectInputId);
+                    editCookieData('mdc', cookieData.productName[indexData], this.value);
+
+                    
+                });
+            }
+        });
+
+    </script>
+}
+
+

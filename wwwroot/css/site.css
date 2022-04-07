@@ -1,0 +1,104 @@
+﻿body {
+    font-family: Helvetica, Arial, sans-serif;
+    margin: 10px, 20px, 10px, 20px;
+}
+
+.precoVelho {
+    text-decoration: line-through;
+    color: #D4AF37;
+    font-size: 14px;
+}
+
+.precoNovo {
+    color: #FFDF00;
+    font: 15px, Helvetica; 
+}
+
+form#formPesquisar {
+    margin: 10px, 20px, 10px, 20px;
+}
+
+input.pesquisar {
+    padding: 7px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+
+.autocomplete {
+    /*the container must be positioned relative:*/
+    position: relative;
+    display: inline-block;
+}
+
+input {
+    border: 1px solid transparent;
+    background-color: #f1f1f1;
+    padding: 10px;
+    font-size: 16px;
+}
+
+    input[type=text] {
+        background-color: #f1f1f1;
+        width: 100%;
+    }
+
+    input[type=submit] {
+        background-color: #ffbf00;
+        color: #fff;
+    }
+
+    button[type=button] {
+        background-color: #D4AF37;
+    }
+
+.autocomplete-items {
+    position: absolute;
+    border: 1px solid #d4d4d4;
+    border-bottom: none;
+    border-top: none;
+    z-index: 99;
+    /*position the autocomplete items to be the same width as the container:*/
+    top: 100%;
+    left: 0;
+    right: 0;
+}
+
+    .autocomplete-items div {
+        padding: 10px;
+        cursor: pointer;
+        background-color: #fff;
+        border-bottom: 1px solid #d4d4d4;
+    }
+
+        .autocomplete-items div:hover {
+            /*when hovering an item:*/
+            background-color: #ffbf00;
+        }
+
+.autocomplete-active {
+    background-color: #ffbf00 !important;
+    color: #ffffff;
+}
+
+.modal-msg {
+display: none;
+position: fixed;
+z-index: 1;
+padding-top: 50px;
+left:0;
+top: 0;
+width: 100%;
+height: 100%;
+overflow: auto;
+}
+
+.modal-msg-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+}

@@ -1,0 +1,42 @@
+﻿
+@{
+    Layout = "_Layout";
+}
+
+@section Scripts{
+
+}
+
+<script async>
+    document.addEventListener('DOMContentLoaded', async () => {
+        await getProduto();
+    });
+
+    async function getProduto() {
+        let req = await fetch('/api/produto');
+        const dados = await req.json();
+        for (let dado of dados) {
+            let secaoCriada = document.createElement('section');
+            let ancora = document.createElement('a');
+            ancora.href = '/produto/' + dado.id + '/' + urlSlug(dado.nomeProd);
+            secaoCriada.style.display = 'block';
+            //secaoCriada.style.backgroundColor = '#FFD700';
+            let imagem = document.createElement('img');
+            imagem.src = 'data:image/' + dado.formatoProd + ';base64, ' + dado.imagemBase64Prod;
+            imagem.alt = dado.nomeProd;
+            ancora.append(imagem);
+            //imagem.before('<a href=' + url + '>' + imagem.src + '</a>');
+            imagem.height = '200';
+            imagem.width = '200';
+            console.log(imagem.parentElement);
+            //ancora.append(imagem);
+            let titulo = document.createElement('h5');
+            titulo.innerHTML = dado.nomeProd;
+            let valor = document.createElement('span');
+            valor.innerHTML = dado.valorProd;
+            secaoCriada.append(ancora, titulo, valor);
+            document.body.append(secaoCriada);
+        }
+    }
+
+</script>

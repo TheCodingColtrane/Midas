@@ -1,0 +1,71 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="O e-commerce do toque vira ouro! O e-commerce que é sua cara" />
+    <meta name="keywords" content="E-commerce, ouro, venda, marketplace, loja digital" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="@Url.Action("", "produto")">Produto</a></li>
+            <li><a href="@Url.Action("promocao", "produto")">Produto em Promoção</a></li>
+        </ul>
+    </nav>
+    <div>
+        <section>
+            <h6>Carrinho</h6>
+            <span id="productAmount"></span>
+            <a href="/produto/carrinho"><img src="~/static/cart.png" style="width: 50px; height: 50px;" /></a>
+        </section>
+    </div>
+    @{
+        @using Midas.Models;
+        if (ViewBag.endereco is not null)
+        {
+            List<Endereco> endereco = (List<Endereco>)ViewBag.endereco;
+
+            foreach (var dado in endereco)
+            {
+                <h5>Entregar em @dado.Bairro - @dado.Rua - @dado.Numero - @dado.Complemento - @dado.CodigoUnico, @dado.Cidade/@dado.Estado</h5>
+            }
+        }
+
+
+        string consulta = "";
+        if (Context.Request.Path.Value == "/search")
+        {
+            if (Context.Request.Query.Count > 0)
+            {
+                consulta = Context.Request.Query["q"];
+
+            }
+        }
+
+    }
+    <form method="GET" action="/search" id="formPesquisar" autocomplete="off">
+        <div class="autocomplete" style="width: 300px;">
+            <input type="text" name="q" value="@consulta" id="consulta" class="pesquisar" />
+        </div>
+    </form>
+    @RenderBody()
+    <footer>
+        <h4>Direitos reservados, Midas - @DateTime.Now.Year &copy;</h4>
+    </footer>
+    @RenderSection("Scripts", false)
+    <script src="~/javascript/site.js"></script>
+    <script src="~/javascript/common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            let consulta = document.querySelector('#consulta');
+            let qtdProdutos = document.querySelector('#productAmount');
+            consulta.addEventListener('keydown', async () => await searchBarAutoComplete(consulta));
+            qtdProdutos.innerHTML = cartProductUpdate();
+
+
+        });
+    </script>
+</body>
+</html>

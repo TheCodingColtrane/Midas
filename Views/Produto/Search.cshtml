@@ -1,0 +1,49 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    Layout = "_Layout";
+    @using Midas.Data.Consultas;
+    @using Midas.Util;
+    @model List<QProduto>
+    string query = Context.Request.Query["q"];
+    string imagem = "";
+    foreach (var produto in Model)
+    {
+        imagem = ImageHandler.ConvertToDataUriFormat(Convert.ToBase64String(produto.Arquivo.FileContents), produto.Arquivo.ContentType);
+        decimal valorNovo = 0;
+        double valorAVista = 0;
+        if (produto.PromocaoPorcentagem > 0)
+        {
+            valorNovo = produto.Valor - (produto.Valor * (produto.PromocaoPorcentagem / 100));
+        }
+        <section>
+            <figure>
+                <a href="@Url.ActionLink(null,"produto", new {id = produto.ID, nome = SEO.UrlSlug(produto.Nome)})">><img src="@imagem" /></a>
+            </figure>
+            <h4>@produto.Nome</h4>
+            @if (valorNovo > 0)
+            {
+                valorAVista = (double)valorNovo;
+                <span class="precoVelho">@produto.Valor</span>
+                <span class="precoNovo">@valorNovo</span><br>
+                valorAVista = valorAVista - (valorAVista * 0.1);
+                <p>À vista o preço sai por, @decimal.Round((decimal)valorAVista, 2).ToString("C")</p>
+                valorAVista = valorAVista / 12;
+                <p>No cartão fazemos 12x de @decimal.Round((decimal)valorAVista, 2).ToString("C")</p>
+            }
+            else
+            {
+                <span class="precoNovo">@produto.Valor</span><br>
+                valorAVista = (double)produto.Valor;
+                valorAVista = valorAVista - (valorAVista * 0.1);
+                <p>À vista o preço sai por, @decimal.Round((decimal)valorAVista, 2).ToString("C")</p>
+                valorAVista = valorAVista / 12;
+                <p>No cartão fazemos 12x de @decimal.Round((decimal)valorAVista, 2).ToString("C")</p>
+            }
+        </section>
+    }
+    <script>
+   
+    </script>
+}

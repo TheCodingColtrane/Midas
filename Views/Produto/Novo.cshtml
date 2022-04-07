@@ -1,0 +1,116 @@
+﻿@using System.Security.Claims;
+@{
+    Layout = "_Layout";
+}
+
+@{
+
+    @using (Html.BeginForm("Novo", "Produto", FormMethod.Post, new { id = "novoProduto", enctype = "multipart/form-data" }))
+    {
+        @Html.Label("Nome")
+        @Html.TextBox("Nome")
+        @Html.Label("Valor")
+        <input type="text" name="Valor" id="Valor" />
+        @Html.Label("Descrição")
+        @Html.TextArea("Descricao")
+        @Html.Label("Especificação Tecnica")
+        @Html.TextArea("Especificacao_Tecnica")
+        @Html.Label("Adicionar Promoção")
+        <select name="PromocaoID" id="PromocaoID">
+        </select>
+        <select name="DepartamentoID" id="DepartamentoID">
+        </select>
+        <input type="file" name="upload" id="imagem" multiple />
+        <input type="submit" value="Cadastrar" />
+        ViewBag.userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+    }
+}
+
+<script async>
+    document.addEventListener('DOMContentLoaded', async () => {
+        let dados = await get('/api/promocao');
+        let listaPromocao = document.querySelector('#PromocaoID');
+        listaPromocao.value = "";
+        listaPromocao.innerHTML = "Sem promoção";
+        listaPromocao.title = "";
+        let opt;
+        for(let dado of dados)
+        {
+            opt = document.createElement('option');
+            opt.value = dado.id;
+            opt.innerHTML = dado.nome;
+            opt.title = dado.descricao;
+            listaPromocao.appendChild(opt);
+        }
+        dados = await get('/api/departamento');
+        let listaDepartamento = document.querySelector('#DepartamentoID');
+        for (let dado of dados) {
+            opt = document.createElement('option');
+            opt.value = dado.id;
+            opt.innerHTML = dado.nome;
+            opt.title = dado.descricao;
+            listaDepartamento.appendChild(opt);
+        }
+        document.querySelector('#novoProduto').addEventListener('submit', async (e) => {
+            let form = e.target;
+            const formulario = new FormData(form);
+            e.preventDefault();
+            let dadosNovoProduto = {};
+            formulario.append('Dir', '');
+            formulario.append('AnuncianteID', '@ViewBag.userId');
+            for (let dado of formulario.keys()) {
+                if (dado === 'DescontoAplicado') {
+                    formulario.get(dado) == true ? dadosNovoProduto[dado] = true : dadosNovoProduto[dado] = false;
+                }
+                else {
+                    if (dado === 'Desconto' || dado === 'Valor') {
+                        dadosNovoProduto[dado] = parseFloat(formulario.get(dado));
+
+                    } else if (dado === 'PromocaoID' || dado === 'DepartamentoID') {
+                        dadosNovoProduto[dado] = parseInt(formulario.get(dado));
+
+                    }
+
+                    else {
+                        dadosNovoProduto[dado] = formulario.get(dado)
+                    }
+
+                }
+
+                //else if (dado != '__RequestVerificationToken' && dado != 'upload') {
+                //}
+
+            }
+            const dadosFormulario = new FormData();
+            dadosFormulario.append('upload', formulario.get('upload'));
+            dadosFormulario.append('jsonProduto', JSON.stringify(dadosNovoProduto));
+            await postProduto(dadosFormulario);
+        });
+    });
+
+    async function postProduto(dadosProduto) {
+        let cabecalhos = new Headers();
+        cabecalhos.append('content-type', 'application/json');
+        //cabecalhos.append('expires', new Date('00:01:30'));
+        cabecalhos.append('accept', 'application/json');
+        const dadosReq = {
+            method: 'POST',
+            body: dadosProduto,
+            //headers: cabecalhos
+        };
+
+        let resposta = await fetch('/api/Produto', dadosReq).then((async (dados)  => {
+            if (dados.ok) {
+                const dadosRes = await dados.json();
+                if (dadosRes.success) {
+                    window.location.href = '/home';
+                }
+                else {
+                    alert('Senha ou e-mail incorreto(s)');
+                }
+            }
+        }));
+
+
+    }
+</script>

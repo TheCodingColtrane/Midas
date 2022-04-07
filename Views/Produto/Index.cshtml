@@ -1,0 +1,359 @@
+﻿@{
+
+    Layout = "_Layout";
+
+}
+@using Midas.Data.Consultas;
+
+@model List<QProduto>
+@{
+    foreach (var dado in Model)
+    {
+        ViewBag.id = dado.ID;
+        ViewBag.userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value;
+        decimal valorReduzido = dado.Valor - (dado.Valor * (dado.Porcentagem / 100));
+        <h1 id="productName">@dado.Nome</h1>
+        <figure>
+            <img src="data:@dado.Arquivo.ContentType;Base64,@Convert.ToBase64String(dado.Arquivo.FileContents)" />
+        </figure>
+        @if (dado.Porcentagem > 0)
+        {
+            <span class="precoVelho">@decimal.Round(dado.Valor, 2).ToString("C")</span>
+            <br>
+            <span class="precoNovo" id="productPrice">@decimal.Round(valorReduzido, 2).ToString("C")</span>
+        }
+        else
+        {
+            <span class="precoNovo" id="productPrice">@decimal.Round(dado.Valor, 2).ToString("C")</span>
+
+        }
+        <br />
+        @if (dado.EstoqueQuantidade < 20)
+        {
+            <span>Realize sua compra! Existe(m) somente @dado.EstoqueQuantidade unidade(s) do produto.</span>
+
+        }
+        <section>
+            <h3>Especificação Técnica</h3>
+            @dado.Especificacao_Tecnica
+            <h3>Descricão</h3>
+            @dado.Descricao
+        </section>
+        <form action="/comprar">
+            <label for="Quantidade">Quantidade</label>
+            @{
+                if (dado.EstoqueQuantidade > 0)
+                {
+                    <select id="productQuantity">
+                        @for (int i = 1; i < dado.EstoqueQuantidade; i++)
+                        {
+                            if (i == 1)
+                            {
+                                <option selected>@i</option>
+
+                            }
+                            <option>@i</option>
+                        }
+                    </select>
+                    <input type="submit" value="Comprar" id="buyProduct" />
+                    <button type="button" id="addProductToCart">Adicionar ao Carrinho</button>
+                }
+            }
+        </form>
+    }
+
+}
+
+
+<section>
+    <h1>Comentários</h1>
+    @{ string userId = "", foiRecomendado = "", produtoId = Context.Request.Query["id"];
+        List<QProduto> Comentarios = ViewBag.comentarios;
+        bool ePrimeiroComentarioRelacionado = false, ePrimeiroComentario = false, existeComentarioRelacionado = false, comentariosJaForamContados = false;
+        int qtdCometariosRelacionados = 0;
+    }
+    @foreach (var dados in Comentarios)
+    {
+        if (userId == "" && dados.ComentarioUsuarioID != null)
+        {
+            userId = dados.ComentarioUsuarioID;
+            ePrimeiroComentario = true;
+        }
+        if (userId == dados.ComentarioUsuarioID)
+        {
+            if (comentariosJaForamContados == false)
+            {
+                qtdCometariosRelacionados = Comentarios.Where(c => c.ComentarioUsuarioID == userId).Count();
+                comentariosJaForamContados = true;
+                if (qtdCometariosRelacionados > 0)
+                {
+                    existeComentarioRelacionado = true;
+                    ePrimeiroComentarioRelacionado = true;
+
+                }
+
+                else
+                {
+                    existeComentarioRelacionado = false;
+                    ePrimeiroComentarioRelacionado = false;
+                }
+
+            }
+
+
+
+        }
+
+        else
+        {
+            ePrimeiroComentario = false;
+            <p>@dados.Mensagem</p>
+            <span>@dados.ComentarioPublicadoEm</span>
+            foiRecomendado = dados.FoiRecomendado == true ? "Este usuário recomenda o produto" : "Este usuário não recomenda o produto";
+            <h5>@foiRecomendado</h5>
+            <button type="button" id="acomment_@dados.ID" onclick="respComentario(@dados.ID, '@dados.ComentarioUsuarioID', @Context.Request.RouteValues["id"].ToString())">Responder Comentário</button>
+            @if (dados.ComentarioFoiAlterado)
+            {
+                <h5>Comentário editado</h5>
+            }
+
+            userId = dados.ComentarioUsuarioID;
+
+        }
+        if (ePrimeiroComentario)
+        {
+            <p>@dados.Mensagem</p>
+            <span>@dados.ComentarioPublicadoEm</span>
+            foiRecomendado = dados.FoiRecomendado == true ? "Este usuário recomenda o produto" : "Este usuário não recomenda o produto";
+            <h5>@foiRecomendado</h5>
+            <button type="button" id="acomment_@dados.ID" onclick="respComentario(@dados.ID, '@dados.ComentarioUsuarioID', @Context.Request.RouteValues["id"])">Responder Comentário</button>
+            @if (dados.ComentarioFoiAlterado)
+            {
+                <h5>Comentário editado</h5>
+            }
+            ePrimeiroComentario = false;
+
+        }
+
+        else
+        {
+            ePrimeiroComentario = false;
+            <p>@dados.Mensagem</p>
+            <span>@dados.ComentarioPublicadoEm</span>
+            foiRecomendado = dados.FoiRecomendado == true ? "Este usuário recomenda o produto" : "Este usuário não recomenda o produto";
+            <h5>@foiRecomendado</h5>
+            <button type="button" id="acomment_@dados.ID" onclick="respComentario(@dados.ID, '@dados.ComentarioUsuarioID', @Context.Request.RouteValues["id"].ToString())">Responder Comentário</button>
+            @if (dados.ComentarioFoiAlterado)
+            {
+                <h5>Comentário editado</h5>
+            }
+
+            userId = dados.ComentarioUsuarioID;
+
+        }
+
+        if (!ePrimeiroComentario && ePrimeiroComentarioRelacionado && existeComentarioRelacionado)
+        {
+            @:<div>
+                <input type="button" id="comment_@dados.ComentarioUsuarioID@@_actions" onclick="commentsActions(this)" />
+            }
+
+            <p>@dados.Mensagem</p>
+            <span>@dados.ComentarioPublicadoEm</span>
+            foiRecomendado = dados.FoiRecomendado == true ? "Este usuário recomenda o produto" : "Este usuário não recomenda o produto";
+            <h5>@foiRecomendado</h5>
+            <button type="button" id="acomment_@dados.ID" onclick="respComentario(@dados.ID, '@dados.ComentarioUsuarioID', @Context.Request.RouteValues["id"])">Responder Comentário</button>
+            @if (dados.ComentarioFoiAlterado)
+            {
+                <h5>Comentário editado</h5>
+            }
+            qtdCometariosRelacionados--;
+            if (existeComentarioRelacionado && qtdCometariosRelacionados == 0)
+            {
+            @:</div>
+            ePrimeiroComentario = false;
+            existeComentarioRelacionado = false;
+        }
+    }
+</section>
+<section>
+    <h2>Publique sua opinião</h2>
+    <form method="post" id="comentario">
+        <label for="Mensagem">Mensagem</label>
+        <textarea name="Mensagem" id="msg" cols="60" rows="30"></textarea>
+        <label for="Avaliacao">Avaliação</label>
+        <select name="Avaliacao" id="avl">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+        </select>
+        <label for="FoiRecomendado">Produto Recomendado</label>
+        <input type="checkbox" name="FoiRecomendado" id="recomendado" />
+        <input type="submit" value="Publicar Comentário" id="pubComentario" />
+    </form>
+</section>
+
+<script>
+          document.addEventListener('DOMContentLoaded', async () => {
+              const comentario = document.querySelector('#comentario');
+              comentario.addEventListener('submit', async (evt) => {
+                  let bt = evt.target;
+                  evt.preventDefault();
+                  let formComentario = new FormData(bt);
+                  formComentario.append('ProdutoID', @ViewBag.id);
+                  formComentario.append('UsuarioID', '@ViewBag.userId');
+                  formComentario.append('ComentarioID', null);
+                  let comentarioDados = {};
+                  for (let dado of formComentario.keys()) {
+                      switch (dado) {
+                          case 'FoiRecomendado':
+                              if (formComentario.get(dado) === 'on') {
+                                  comentarioDados[dado] = true;
+                              } else {
+                                  comentarioDados[dado] = false;
+                              }
+                              break;
+                          case 'Avaliacao':
+                              comentarioDados[dado] = parseInt(formComentario.get(dado));
+                              break;
+                          case 'ProdutoID':
+                              comentarioDados[dado] = parseInt(formComentario.get(dado));
+                              break;
+                          case 'ComentarioID':
+                              comentarioDados[dado] = parseInt(formComentario.get(dado));
+                              break;
+                          default:
+                              comentarioDados[dado] = formComentario.get(dado);
+                              break;
+                      }
+                  }
+
+                  comentarioDados = JSON.stringify(comentarioDados);
+                  const dados = await postData('/api/comentario', comentarioDados);
+                  if (dados != "" || dados != 0) {
+
+                  }
+
+              });
+              document.querySelector('#buyProduct').addEventListener('submit', function (evt) {
+                  evt.preventDefault();
+                  let cookieData = getCartCookieData('mdc');
+                  let cartProductsAmount = cookieData.length;
+                  cookieData.productId[cartProductsAmount - 1] = '@ViewBag.id';
+                  cookieData.productURL[cartProductsAmount - 1] = location.pathname;
+                  cookieData.productQuantity[cartProductsAmount - 1] = parseInt(document.querySelector('#productQuantity').value);
+                  cookieData.productName[cartProductsAmount - 1] = document.querySelector('#productName').innerHTML;
+                  let price = document.querySelector('#productPrice').innerHTML;
+                  for (let pos = 0; pos < price.length; pos++) {
+                      if (!isNaN(parseFloat(price.charAt(pos)))) {
+                          price = parseFloat(price.substring(pos));
+                          break;
+                      }
+                  }
+                  cookieData.productPrice[cartProductsAmount - 1] = price;
+                  const isAddedToCart = setCookie('mdc', 10, cookieData, 1);
+                  if (isAddedToCart) {
+                      modalMensagem('Produto adicionado ao carrinho.');
+                      window.location.href = '/compra/finalizar';
+                  } else {
+                      modalMensagem('Este produto já está no carrinho.');
+                  }
+              });
+
+              document.querySelector('#productQuantity').addEventListener('change', async function () {
+                  let productPriceReference = document.querySelector('#productPrice');
+                  const productStockStatusCheck = await get('/api/produto/' + '@ViewBag.id' + 'stock-check-availability?qty=' + this.value);
+                  const fields = isStockAvailable.length;
+                  let productPrice = 0;
+                  productPriceReference.innerHTML = productPrice;
+                  if (fields > 1) {
+                      if (productStockStatusCheck.stockAvailability) {
+                          modalMensagem('Infelizmente, no momento há somente ' + productStockStatusCheck.stockAvalaible + 'unidades disponiveis do produto');
+                          productPrice = parseFloat(Number(productPriceReference.innerHTML) * Number(productStockStatusCheck.stockAvalaible));
+                          productPriceReference.innerHTML = productPrice;
+                          return;
+                      } else {
+                          modalMensagem('Infelizmente, no momento não há estoque disponível do produto');
+                          document.querySelector('#buyProduct').setAttribute('readonly', true);
+                          document.querySelector('#addProductToCart').setAttribute('readonly', true);
+                          return;
+                      }
+                  }
+
+                  productPrice = parseFloat(Number(productPriceReference.innerHTML) * Number(this.value));
+                  productPriceReference.innerHTML = productPrice;
+              });
+
+              document.querySelector('#addProductToCart').addEventListener('click', function () {
+                  let productInfo = location.pathname;
+                  productInfo = productInfo.split('/').filter(value => value != "");
+                  const id = parseInt(productInfo[1]);
+                  const name = document.querySelector('#productName').innerHTML;
+                  const quantity = parseInt(document.querySelector('#productQuantity').value);
+                  const URL = location.pathname;
+                  let price = document.querySelector('#productPrice').innerHTML;
+                  for (let pos = 0; pos < price.length; pos++)
+                  {
+                      if (!isNaN(parseFloat(price.charAt(pos)))) {
+                          price = parseFloat(price.substring(pos));
+                          break;
+                      }
+                  }
+                  let isAddedToCart = false;
+                  let cookieData = getCartCookieData('mdc');
+                  let cookieDataAmount = cookieData.productId.length;
+                  if (cookieDataAmount > 0) {
+                      cookieData.productId[cookieDataAmount - 1] = id;
+                      cookieData.productName[cookieDataAmount - 1] = name;
+                      cookieData.productQuantity[cookieDataAmount - 1] = quantity;
+                      cookieData.productURL[cookieDataAmount - 1] = URL;
+                      cookieData.productPrice[cookieDataAmount - 1] = price;
+                       isAddedToCart = setCookie('mdc', 10, cookieData, 1);
+                      if (isAddedToCart) {
+                          modalMensagem('Produto adicionado ao carrinho.');
+                      } else {
+                          modalMensagem('Este produto já está no carrinho.');
+                      }
+                  } else {
+                      cookieData.productId[0] = id;
+                      cookieData.productName[0] = name;
+                      cookieData.productQuantity[0] = quantity;
+                      cookieData.productURL[0] = URL;
+                      cookieData.productPrice[0] = price;
+                       isAddedToCart = setCookie('mdc', 10, cookieData, 1);
+                      if (isAddedToCart) {
+                          modalMensagem('Produto adicionado ao carrinho.');
+                      } else {
+                          modalMensagem('Este produto já está no carrinho.');
+                      }
+                  }
+              });
+            //const dadosUrl = new URLSearchParams(window.location);
+            //const urlAtual = dadosUrl.get('href');
+            //let qtdCaracteresOrigem = dadosUrl.get('origin').length;
+            //let qtdCaracteresUrl = dadosUrl.get('href').length;
+            //let id = "";
+            //for (let charAtual = qtdCaracteresOrigem; charAtual < qtdCaracteresUrl; charAtual++) {
+            //    if (!urlAtual.charAt(charAtual) === '/') {
+            //        id += charAtual;
+            //    }
+            //    else {
+            //        break;
+            //    }
+            //}
+            //id = parseInt(id);
+
+            //const dados = await get('/api/produto/' + id);
+            //let imgProduto = document.createElement('img');
+            //imgProduto.src = 'data:' + dado.img.contentType + ';Base64, ' + dados.img.file;
+            //imgProduto.alt = dado.nome;
+            //let nomeProduto = document.createElement('h1');;
+            //nomeProduto.innerHTML = dado.nome;
+            //let valorProduto = document.createElement('SPAN ')
+          });
+
+
+
+</script>

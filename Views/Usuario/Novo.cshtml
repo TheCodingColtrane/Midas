@@ -1,0 +1,207 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    <!DOCTYPE html>
+    <html lang="pt-br">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script src="~/javascript/site.js"></script>
+        <script src="~/javascript/common.js"></script>
+    </head>
+    <body>
+        <form asp-controller="Usuario" asp-action="Novo" method="Post" id="formNovoUsuario">
+            <label asp-for="UserName">Nome de Usuario</label>
+            <input asp-for="UserName" onblur="existeUsuario(this.value)" name="userName" />
+            <label asp-for="CodigoUnico" id="lCodigoUnico">CPF</label>
+            <input asp-for="CodigoUnico" id="codigoUnico" onblur="isIdValid(this.value)" oninput="this.maxlength == 14 ? formatCPF(this.value, this) : formatCNPJ(this.value, this);" name="codigoUnico" maxlength="14" />
+            <label asp-for="Email">E-mail</label>
+            <input asp-for="Email" type="email" name="email" />
+            <label asp-for="Senha">Senha</label>
+            <input asp-for="Senha" type="password" name="senha" />
+            <label asp-for="EEmpresa" id="lEEmpresa">Pessoa Jurídica</label>
+            <input type="checkbox" name="eEmpresa" id="chkEmpresa" />
+            <input type="text" name="Cep" id="cep" minlength="9" onblur="getCep(this.value)" />
+            <input type="text" name="Pais" id="pais" value="Brasil" readonly/>
+            <input type="text" name="Estado" id="estado" readonly/>
+            <input type="text" name="Cidade" id="cidade" readonly/>
+            <input type="text" name="Bairro" id="bairro" readonly />
+            <input type="text" name="Rua" id="rua" readonly/>
+            <input type="text" name="Numero" id="numero" readonly />
+            <input type="text" name="Complemento" id="complemento" readonly />
+            <input type="submit" value="Cadastrar" />
+            <span id="msg"></span>
+        </form>
+    </body>
+</html>
+
+}
+<script async>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelector('#formNovoUsuario').addEventListener('submit', prepareForm);
+        document.querySelector('#chkEmpresa').addEventListener('change', function (e) {
+            const chkEmpresa = e.target;
+            const labelCodigoEmpresa = document.querySelector('#lCodigoUnico');
+            let codigoUnico = document.querySelector('#codigoUnico');
+            codigoUnico.value = "";
+            if (chkEmpresa.checked) {
+                if (labelCodigoEmpresa.innerHTML === 'CPF') {
+                    labelCodigoEmpresa.innerHTML = 'CNPJ';
+                    codigoUnico.setAttribute('maxlength', 18);
+                    if (document.querySelector('#lEEmpresa').innerHTML === 'Pessoa Fisica') {
+                        document.querySelector('#lEEmpresa').innerHTML = 'Pessoa Jurídica';
+                    }
+                }
+            }
+            else {
+                if (labelCodigoEmpresa.innerHTML === 'CNPJ') {
+                    labelCodigoEmpresa.innerHTML = 'CPF';
+                    codigoUnico.setAttribute('maxlength', 14);
+                    if (document.querySelector('#lEEmpresa').innerHTML === 'Pessoa Jurídica') {
+                        document.querySelector('#lEEmpresa').innerHTML = 'Pessoa Fisica';
+                    }
+                }
+            }
+        });
+    });
+
+    async function prepareForm(ev) {
+        ev.preventDefault();
+        let formulario = ev.target;
+        let dadosFormulario = new FormData(formulario);
+        let novoUsuarioDados = {};
+        const eEmpresa = document.querySelector('#chkEmpresa').checked;
+        for (let dado of dadosFormulario.keys()) {
+            if (dado === 'eEmpresa' && eEmpresa === true) {
+                novoUsuarioDados[dado] = true;
+            }
+
+            else if (dado === 'eEmpresa' && eEmpresa == false) {
+                novoUsuarioDados[dado] = false;
+
+            }
+            else {
+                novoUsuarioDados[dado] = dadosFormulario.get(dado);
+
+            }
+
+        }
+
+        novoUsuarioDados = JSON.stringify(novoUsuarioDados);
+        await postUsuario(novoUsuarioDados);
+    }
+    async function postUsuario(dadosUsuario) {
+
+        const dadosReq = {
+            method: 'post',
+            mode: 'cors',
+            body: dadosUsuario,
+            headers: {
+                'content-type': 'application/json'
+            }
+        };
+
+        const res = await fetch('', dadosReq).then(function (dados) {
+            alert(res.msg);
+            window.location.href = '/login';
+        }).catch(function (err) {
+            alert(err);
+        });
+    }
+    function formatCPF(cpf, evt) {
+        const cpfQtdCaracteres = cpf.length;
+
+        let novoCpf = String();
+        let cpfAFormatar = String(cpf);
+        if (cpfQtdCaracteres === 3) {
+            if (!isNaN(cpfAFormatar.charAt(cpfQtdCaracteres - 1))) {
+                for (let i = 0; i < 3; i++) {
+                    novoCpf += cpfAFormatar.charAt(i);
+                    if (i === 2) {
+                        novoCpf += '.';
+                        return evt.value = novoCpf;
+                    }
+                }
+
+            }
+        }
+
+        else if (cpfQtdCaracteres === 7) {
+            if (!isNaN(cpfAFormatar.charAt(6))) {
+                for (let i = 0; i < 8; i++) {
+                    novoCpf += cpfAFormatar.charAt(i);
+                    if (i === 7) {
+                        novoCpf += '.';
+                        return evt.value = novoCpf;
+                    }
+                }
+
+            }
+        }
+
+
+        else if (cpfQtdCaracteres === 11) {
+            if (!isNaN(cpfAFormatar.charAt(10))) {
+                for (let i = 0; i < 12; i++) {
+                    novoCpf += cpfAFormatar.charAt(i);
+                    if (i === 11) {
+                        novoCpf += '-';
+                        return evt.value = novoCpf;
+                    }
+                }
+
+            }
+
+        }
+
+    }
+    function formatCNPJ(cnpj, evt) {
+        const qtdCaracteresCnpj = cnpj.length;
+        let novoCnpj = String();
+        let cnpjAFormatar = String(cnpj);
+        switch (qtdCaracteresCnpj) {
+            case 2:
+                if (!isNaN(cnpjAFormatar.charAt(qtdCaracteresCnpj - 1))) {
+                    for (let i = 0; i < 2; i++) {
+                        novoCnpj += cnpjAFormatar.charAt(i);
+                        if (i === 1) {
+                            novoCnpj += '.';
+                            return evt.value = novoCnpj;
+                        }
+                    }
+                }
+            case 6:
+                if (!isNaN(cnpjAFormatar.charAt(qtdCaracteresCnpj - 1))) {
+                    for (let i = 0; i < 6; i++) {
+                        novoCnpj += cnpjAFormatar.charAt(i);
+                        if (i === 5) {
+                            novoCnpj += '.';
+                            return evt.value = novoCnpj;
+                        }
+                    }
+                }
+            case 10:
+                if (!isNaN(cnpjAFormatar.charAt(qtdCaracteresCnpj - 1))) {
+                    for (let i = 0; i < 10; i++) {
+                        novoCnpj += cnpjAFormatar.charAt(i);
+                        if (i === 9) {
+                            novoCnpj += '/';
+                            return evt.value = novoCnpj;
+                        }
+                    }
+                }
+            case 15:
+                if (!isNaN(cnpjAFormatar.charAt(qtdCaracteresCnpj - 1))) {
+                    for (let i = 0; i < 15; i++) {
+                        novoCnpj += cnpjAFormatar.charAt(i);
+                        if (i === 14) {
+                            novoCnpj += '-';
+                            return evt.value = novoCnpj;
+                        }
+                    }
+                }
+        }
+
+    }
+</script>

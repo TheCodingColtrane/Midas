@@ -1,0 +1,51 @@
+﻿@{
+    @using Midas.Data.Consultas;
+    @model QProduto
+    Layout = "_Layout";
+    string[] produtos = Context.Request.Cookies["mdc"].Split("|").Where(x => x != "").ToArray();
+    int qtdProdutos = Model[0].Carrinho.Length / 5;
+    <section>
+        <h4>Dados da entrega</h4>
+        <dl>
+            <dt>País</dt>
+            <dd>@Model[0].Dados[0].Pais</dd>
+            <dt>Estado</dt>
+            <dd>@Model[0].Dados[0].Estado</dd>
+            <dt>Cidade</dt>
+            <dd>@Model[0].Dados[0].Cidade</dd>
+            <dt>Rua</dt>
+            <dd>@Model[0].Dados[0].Rua</dd>
+            <dt>Número</dt>
+            <dd>@Model[0].Dados[0].Numero</dd>
+            <dt>CEP</dt>
+            <dd>@Model[0].Dados[0].CodigoUnico</dd>
+        </dl>
+
+        <dl>
+            <dt>Usuário</dt>
+            <dd>@Model[0].Dados[0].UserName</dd>
+            <dt>CPF</dt>
+            <dd>@Model[0].Dados[0].UsuarioCodigoUnico</dd>
+            <dt>Data de Nascimento</dt>
+            <dd>@Model[0].Dados[0].DataNascimento</dd>
+            <dt>Sexo</dt>
+            <dd>@Model[0].Dados[0].Sexo</dd>
+            <dt>E-mail</dt>
+            <dd>@Model[0].Dados[0].Email</dd>
+        </dl>
+    </section>
+    for (int i = 0; i < qtdProdutos / 5; i++)
+    {
+        <section>
+            <h3 id="product_Name_@Model[0].Carrinho[i, 2]">@Model[0].Carrinho[i, 2]</h3>
+            <figure>
+                <a href="@Model[0].Carrinho[i, 3]"><img src="data:image/jpeg; Base64, @Model[0].Carrinho[i, 0]" alt="@Model[0].Carrinho[i, 2]" /></a>
+            </figure>
+            <span class="precoNovo">@Model[0].Carrinho[i, 4]</span>
+        </section>
+        }
+
+    }
+
+
+

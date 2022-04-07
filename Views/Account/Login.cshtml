@@ -1,0 +1,56 @@
+﻿@{
+    Layout = "_Layout";
+}
+<section>
+    <h5>Midas</h5>
+    @using (Html.BeginForm("Login", "Account", FormMethod.Post, new { @id = "loginForm" }))
+    {
+        @Html.Label("Username")
+        @Html.TextBox("Username")
+        @Html.Label("Senha")
+        @Html.TextBox("Senha")
+        <input type="submit" value="Entrar" />
+    }
+</section>
+
+<script async>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelector('#loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            let form = e.target;
+            let camposLoginForm = new FormData(form);
+            let dadosLogin = {};
+            for (let campo of camposLoginForm.keys()) {
+                dadosLogin[campo] = camposLoginForm.get(campo);
+            }
+            dadosLogin = JSON.stringify(dadosLogin);
+            await login(dadosLogin);
+        });
+    });
+
+    async function login(dadosLogin) {
+        const cabecalhos = new Headers();
+        cabecalhos.append('content-type', 'application/json');
+        cabecalhos.append('expires', new Date('00:01:30'));
+        cabecalhos.append('accepts', 'application/json');
+        const dadosReq = {
+            method: 'post',
+            body: dadosLogin,
+            headers: cabecalhos
+        };
+
+        let resposta = await fetch('', dadosReq);
+        if (resposta.ok) {
+           const dadosRes = await resposta.json();
+            if (dadosRes.success) {
+                window.location.href = '/home';
+            }
+            else {
+                alert('Senha ou e-mail incorreto(s)');
+            }
+        }
+
+
+    }
+
+</script>
